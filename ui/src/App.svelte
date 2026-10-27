@@ -8,12 +8,19 @@
     import {cycleTheme, theme} from 'occulite-ui/theme';
 
     import BindingsPage from './BindingsPage.svelte';
+    import Editor from './Editor.svelte';
+    import ForeignPage from './ForeignPage.svelte';
+    import ImportPage from './ImportPage.svelte';
+    import KeysPage from './KeysPage.svelte';
     import {get} from './api.js';
-    import type {Health} from './model.js';
+    import type {Health, View} from './model.js';
 
     const notices = new NoticesStore();
     let tab = $state('bindings');
     let health = $state<Health | undefined>();
+    let editorOpen = $state(false);
+    let editing = $state<View | undefined>();
+    let reload = $state(0);
 
     async function loadHealth() {
         try {
@@ -29,8 +36,21 @@
         return () => clearInterval(id);
     });
 
+    function openEditor(b: View | undefined) {
+        editing = b;
+        editorOpen = true;
+    }
+
+    function changed() {
+        loadHealth();
+        reload++;
+    }
+
     const tabs = $derived([
         {id: 'bindings', label: t('Bindings'), ...(health?.service.changed ? {badge: health.service.changed} : {})},
+        {id: 'foreign', label: t('Found links')},
+        {id: 'keys', label: t('Keys')},
+        {id: 'import', label: t('Import')},
     ]);
 </script>
 
@@ -47,7 +67,18 @@
         <div class="lpd-banner" role="status">{t('The event stream is not connected ({detail}).', {detail: health.service.stream_detail || '…'})}</div>
     {/if}
     <main class="lpd-page">
-        <BindingsPage {notices} onchanged={loadHealth} />
+        {#if tab === 'bindings'}
+            {#key reload}
+                <BindingsPage {notices} onchanged={loadHealth} onopen={openEditor} />
+            {/key}
+        {:else if tab === 'foreign'}
+            <ForeignPage {notices} onchanged={changed} />
+        {:else if tab === 'keys'}
+            <KeysPage {notices} />
+        {:else}
+            <ImportPage {notices} onchanged={changed} />
+        {/if}
     </main>
+    <Editor open={editorOpen} binding={editing} {notices} onclose={() => (editorOpen = false)} onchanged={changed} />
     <Notices notices={notices.visible} ondismiss={(id) => notices.dismiss(id)} />
 </div>

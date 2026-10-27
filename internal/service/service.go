@@ -782,9 +782,29 @@ func (s *Service) Apply(ctx context.Context, b model.Binding) (*links.Result, er
 	}
 	// the links are the binding's now: it is stored even after a later failure, so the user
 	// can retry (reapply) or remove it
+	var gone []model.Sender
+	if old, ok := s.o.Store.Get(p.Binding.ID); ok {
+		for i, snd := range p.Binding.Senders {
+			for _, o := range old.Senders {
+				if o.Same(snd) {
+					p.Binding.Senders[i].Usage = o.Usage
+				}
+			}
+		}
+		for _, o := range old.Senders {
+			kept := false
+			for _, snd := range p.Binding.Senders {
+				kept = kept || snd.Same(o)
+			}
+			if !kept {
+				gone = append(gone, o)
+			}
+		}
+	}
 	if err := s.o.Store.Put(p.Binding); err != nil {
 		return r, err
 	}
+	s.releaseUsages(ctx, gone, p.Binding.ID)
 	s.reportUsages(ctx, p.Binding.ID)
 	s.afterWrite(ctx, p.Binding.ID, r)
 	if r.Failed != "" {

@@ -76,6 +76,10 @@
         return b.sender_views.map((s) => `${s.name || s.address} (${t('role.' + s.role)})`).join(', ');
     }
 
+    function sendersTitle(b: View): string {
+        return b.sender_views.map((s) => `${s.name || s.address} - ${s.interface} ${s.address}, ${t('role.' + s.role)}${s.usage ? `, ${t('usage.' + s.usage.state)}` : ''}`).join('\n') || t('senders.none');
+    }
+
     function hold(b: View): string {
         const a = b.activity;
         if (!a.last_hold || a.last_hold.startsWith('0001')) return t('hold.never');
@@ -134,6 +138,9 @@
                         <span class="lpd-truncate" title={row.target.address}>{row.target_name || row.target.address}</span>
                     {/if}
                     {#if row.adopted}<span class="lpd-chip" title={t('adopted')}>{t('adopted')}</span>{/if}
+                {:else if column.key === 'senders'}
+                    <span class="lpd-truncate" title={sendersTitle(row)}>{senders(row)}</span>
+                    {#if row.sender_views.some((s) => s.usage && s.usage.state !== 'reported')}<span class="lpd-warn" title={sendersTitle(row)}> !</span>{/if}
                 {:else if column.key === 'keys'}
                     <span class="lpd-mono" title="{row.up} / {row.down}">{keyLabel(row.up, 'up')} {keyLabel(row.down, 'down')}</span>
                 {:else if column.key === 'status'}

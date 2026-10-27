@@ -528,6 +528,21 @@ func TestValueUsages(t *testing.T) {
 	if len(f.CallsOf("reportValueUsage")) != n {
 		t.Error("a reported usage was reported again")
 	}
+	// the binding applied again with other senders: the old one released, the new reported
+	d3 := d
+	d3.ID = "dim-3"
+	d3.Senders = []model.Sender{{Interface: "HmIP-RF", Address: "WRC:2", Role: model.RoleUp}}
+	if _, err := s.Apply(ctx, d3); err != nil {
+		t.Fatal(err)
+	}
+	if f.Usages["HmIP-RF|WRC:1|PRESS_SHORT"] != 0 || f.Usages["HmIP-RF|WRC:2|PRESS_SHORT"] != 1 {
+		t.Errorf("usages after the re-apply %v", f.Usages)
+	}
+	dd := d
+	dd.ID = "dim-3"
+	if _, err := s.Apply(ctx, dd); err != nil {
+		t.Fatal(err)
+	}
 	// a second binding with the same key: removing the first keeps the usage
 	d2 := d
 	d2.Target.Address = "DIM:3"

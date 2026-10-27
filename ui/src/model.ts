@@ -5,10 +5,17 @@ export type Mode = 'two-key' | 'one-key';
 export type SenderRole = 'up' | 'down' | 'both';
 export type State = 'active' | 'pending' | 'changed' | 'missing-link' | 'error' | 'unknown';
 
+export interface Usage {
+    state: 'reported' | 'pending' | 'failed' | 'released';
+    detail?: string;
+    at?: string;
+}
+
 export interface Sender {
     interface: string;
     address: string;
     role: SenderRole;
+    usage?: Usage;
 }
 
 export interface SenderView extends Sender {

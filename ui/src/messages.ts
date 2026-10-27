@@ -44,6 +44,7 @@ export const MESSAGES: Catalogue = {
     'mode.one-key': {de: 'Eine Taste', en: 'One key'},
     'mode.two-key.hint': {de: 'Eine Taste schaltet ein und dimmt hoch, die andere schaltet aus und dimmt runter.', en: 'One key switches on and dims up, the other switches off and dims down.'},
     'mode.one-key.hint': {de: 'Kurz drücken schaltet um, lang drücken dimmt abwechselnd hoch und runter.', en: 'A short press toggles, a long press dims up and down in turns.'},
+    Kind: {de: 'Art', en: 'Kind'},
     'kind.dimmer': {de: 'Dimmer', en: 'Dimmer'},
     'kind.blind': {de: 'Rollladen', en: 'Blind'},
     'status.active': {de: 'Aktiv', en: 'Active'},

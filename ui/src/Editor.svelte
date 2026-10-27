@@ -459,6 +459,11 @@
         flex-wrap: wrap;
         margin-top: 4px;
     }
+    .lpd-add select,
+    .lpd-senders select {
+        width: auto;
+        max-width: 14em;
+    }
     .lpd-heard {
         margin-top: 6px;
     }

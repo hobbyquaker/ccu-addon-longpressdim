@@ -90,7 +90,7 @@
         {key: 'name', label: t('Actuator'), width: 200, value: (b) => b.target_name || b.target.address},
         {key: 'room', label: t('Room'), width: 110, value: (b) => (b.target_rooms ?? []).join(', ')},
         {key: 'interface', label: t('Interface'), width: 100, value: (b) => b.target.interface},
-        {key: 'kind', label: t('kind.dimmer'), width: 90, value: (b) => t('kind.' + b.kind)},
+        {key: 'kind', label: t('Kind'), width: 90, value: (b) => t('kind.' + b.kind)},
         {key: 'mode', label: t('Mode'), width: 100, value: (b) => t('mode.' + b.mode)},
         {key: 'senders', label: t('Senders'), width: 220, value: senders},
         {key: 'keys', label: t('Keys'), width: 110, fixed: true, value: (b) => `${keyLabel(b.up, 'up')} ${keyLabel(b.down, 'down')}`, sortable: false},

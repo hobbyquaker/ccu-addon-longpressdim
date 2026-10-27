@@ -19,7 +19,7 @@ const strings: Record<string, {de: string; en: string}> = {
         de: 'Eine Deinstallation des Addons lässt die Direktverknüpfungen auf den Aktoren und die Namen der virtuellen Tasten stehen. Hier werden alle Verknüpfungen des Addons entfernt: die Direktverknüpfungen gelöscht, die Tasten freigegeben.',
         en: 'Uninstalling the addon leaves the direct links on the actuators and the virtual keys\' names in place. This removes every binding of the addon: the direct links are deleted, the keys released.',
     },
-    'removeAll.count': {de: '{count} Verknüpfungen vorhanden.', en: '{count} bindings present.'},
+    'removeAll.count': {de: 'Vorhandene Verknüpfungen: {count}', en: 'Bindings present: {count}'},
     'removeAll.forget': {de: 'Nur vergessen: die Direktverknüpfungen bleiben', en: 'Forget only: the direct links stay'},
     'removeAll.button': {de: 'Alle Verknüpfungen entfernen', en: 'Remove all bindings'},
     'removeAll.question': {de: 'Wirklich alle {count} Verknüpfungen entfernen?', en: 'Really remove all {count} bindings?'},

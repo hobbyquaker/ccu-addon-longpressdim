@@ -3,7 +3,11 @@
 /.testtmp/
 /ui/node_modules/
 /ui/dist/
-/addon/longpressdim/www/
+# the build fills www/; the manifest's images live there in the repository too, because the
+# catalogue reads them beside the manifest at the release tag
+/addon/longpressdim/www/*
+!/addon/longpressdim/www/icon.svg
+!/addon/longpressdim/www/icon-dark.svg
 /addon/longpressdim/app/
 /addon/longpressdim/lib/
 /addon/longpressdim/bin/

@@ -3,14 +3,16 @@
 #   Builds the addon packages: dist/longpressdim-<arch>-<version>.tar.gz and .sha256 for aarch64,
 #   x86_64 and armv7l (the asset names openccu-lite's catalogue resolves by uname -m).
 #
-#     VERSION=0.1.0 scripts/build.sh            # all three
+#     VERSION=0.1.1 scripts/build.sh            # all three
 #     ARCHES=x86_64 scripts/build.sh            # one
 #     SKIP_UI=1 scripts/build.sh                # keep addon/longpressdim/app and www as they are
 #
 #   The web app is built with npm in ui/ and copied to addon/longpressdim/app (the daemon serves it at
 #   /addons/longpressdim/); the settings page - the ccu-addon-kit frame with the Bindings tab - is built
 #   the same way and vendored with the kit's CGIs into addon/longpressdim/www (/addons/longpressdim-config/),
-#   together with addon/static; the daemon is a static Go binary (CGO_ENABLED=0) per architecture.
+#   together with addon/static (the 503 page); the manifest's icons are tracked in addon/longpressdim/www
+#   itself, where the catalogue reads them from the repository at the release tag; the daemon is a
+#   static Go binary (CGO_ENABLED=0) per architecture.
 #
 set -e
 cd "$(dirname "$0")/.."

@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.1] - 2026-10-27
+
+- **openccu-lite:** the Addons page shows the addon's icon before the install. The icons are now in the repository at
+  the path the manifest names, where the system's catalogue check reads them; before, it found none, showed the first
+  letter instead and logged a warning per icon at every check.
+- **openccu-lite:** the uninstall no longer tries to remove the system's files (the links, the proxy rule) and prints no
+  "Permission denied" lines; the system removes them itself.
+- **CCU3 and OpenCCU:** the uninstall restarts the web server when it removed the addon's proxy rule, so
+  `/addons/longpressdim/` answers 404 right away instead of 503 until the next restart, and removes the rule's
+  directory when it was the last file in it.
+- The page shown while the service is not running names the addon *Long press dim*, as everywhere else.
+
 ## [0.1.0] - 2026-10-27
 
 The first release.

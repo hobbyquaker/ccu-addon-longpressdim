@@ -1,0 +1,73 @@
+{
+  "$schema": "../ui/node_modules/ccu-addon-kit/schema/kit.schema.json",
+  "schema": 1,
+  "id": "longpressdim",
+  "www": "longpressdim-config",
+  "name": {
+    "de": "Long press dim",
+    "en": "Long press dim"
+  },
+  "icon": "icon.svg",
+  "service": {
+    "commands": [
+      "start",
+      "stop",
+      "restart"
+    ],
+    "pollSeconds": 10
+  },
+  "logs": [
+    {
+      "id": "main",
+      "label": {
+        "de": "Dienst",
+        "en": "Service"
+      },
+      "file": "/var/log/longpressdim.log",
+      "rotated": "/var/log/longpressdim.log.0"
+    },
+    {
+      "id": "syslog",
+      "label": {
+        "de": "Systemprotokoll",
+        "en": "System log"
+      },
+      "syslogTag": "longpressdim"
+    }
+  ],
+  "update": {
+    "github": "hobbyquaker/ccu-addon-longpressdim"
+  },
+  "tabs": [
+    "relay",
+    "kit:service",
+    "kit:log",
+    "kit:about"
+  ],
+  "liteTabs": [
+    "relay",
+    "kit:about"
+  ],
+  "proxied": {
+    "path": "/addons/longpressdim/",
+    "port": 8293,
+    "websocket": false,
+    "errorPage": true
+  },
+  "app": {
+    "path": "/addons/longpressdim/",
+    "label": {
+      "de": "Long press dim öffnen",
+      "en": "Open Long press dim"
+    }
+  },
+  "links": [
+    {
+      "label": {
+        "de": "ccu-addon-longpressdim auf GitHub",
+        "en": "ccu-addon-longpressdim on GitHub"
+      },
+      "url": "https://github.com/hobbyquaker/ccu-addon-longpressdim"
+    }
+  ]
+}

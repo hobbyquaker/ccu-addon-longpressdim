@@ -1,0 +1,11 @@
+/dist/
+/build/
+/.testtmp/
+/ui/node_modules/
+/ui/dist/
+/addon/longpressdim/www/
+/addon/longpressdim/app/
+/addon/longpressdim/lib/
+/addon/longpressdim/bin/
+/ui/settings/dist/
+/addon/longpressdim/versions

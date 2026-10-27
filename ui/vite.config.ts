@@ -1,0 +1,27 @@
+import {svelte} from '@sveltejs/vite-plugin-svelte';
+import {defineConfig} from 'vitest/config';
+
+// The app is served by the addon's Go backend at /addons/longpressdim/ (and may sit at another base on
+// a classic CCU), so every asset URL is relative.
+export default defineConfig({
+    base: './',
+    plugins: [svelte()],
+    resolve: {dedupe: ['svelte']},
+    // the kit belongs to the settings page (settings/vite.config.mjs); the app does not import it,
+    // and the dev server's dependency scan must not pre-bundle its .svelte.ts sources
+    optimizeDeps: {exclude: ['ccu-addon-kit']},
+    build: {
+        outDir: 'dist',
+        emptyOutDir: true,
+        target: 'es2022',
+        sourcemap: false,
+    },
+    server: {
+        // development against a backend started with -no-session-check -port 8293
+        proxy: {'/addons/longpressdim/api': 'http://127.0.0.1:8293'},
+    },
+    test: {
+        environment: 'jsdom',
+        include: ['src/**/*.test.ts'],
+    },
+});

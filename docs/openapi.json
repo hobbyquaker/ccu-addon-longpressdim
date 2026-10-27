@@ -1,0 +1,57 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "ccu-addon-longpressdim API",
+    "version": "1",
+    "description": "The addon's own API, served at /addons/longpressdim/api/v1/ behind the system's session. Writes carry the kit's CSRF header X-CCU-Addon-Request and, where marked, need an administrator session. Every write to the system (links, link parameters, names and markers of the virtual keys) is planned first: POST bindings/plan answers the dry run that POST bindings executes."
+  },
+  "paths": {
+    "/api/v1/health": {"get": {"summary": "The daemon's state", "responses": {"200": {"description": "{ok, version, platform, uptime_s, service: {stream, stream_detail, bindings, presses, pending, changed}}"}}}},
+    "/api/v1/openapi.json": {"get": {"summary": "This specification", "responses": {"200": {"description": "OpenAPI 3.1"}}}},
+    "/api/v1/interfaces": {"get": {"summary": "The interfaces with a virtual remote", "responses": {"200": {"description": "{interfaces: [{name, protocol, url_path, running}]}"}}}},
+    "/api/v1/targets": {"get": {"summary": "The dimmer and blind channels of every interface", "responses": {"200": {"description": "{targets: [{interface, address, type, device, family, kind, name, rooms}]}"}}}},
+    "/api/v1/senders": {"get": {"summary": "The key channels of every interface (PRESS_SHORT or PRESS_LONG in their VALUES), the virtual remotes left out", "responses": {"200": {"description": "{senders: [{interface, address, type, device, name, rooms}]}"}}}},
+    "/api/v1/keys/{interface}": {"get": {"summary": "The 50 virtual keys of an interface: links, name, marker, free", "parameters": [{"name": "interface", "in": "path", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "{keys: [{n, address, name, links, marker, foreign, free}]}"}}}},
+    "/api/v1/bindings": {
+      "get": {"summary": "Every binding with its names, status and relay activity", "responses": {"200": {"description": "{bindings: [View]}"}}},
+      "post": {"summary": "Create a binding: plan, write the links and parameters, store (admin)", "requestBody": {"content": {"application/json": {"schema": {"$ref": "#/components/schemas/Binding"}}}}, "responses": {"201": {"description": "Result"}, "422": {"description": "the plan failed (invalid draft, no free keys, a key in use)"}, "502": {"description": "a write failed: {error, message, result}"}}}
+    },
+    "/api/v1/bindings/plan": {"post": {"summary": "The dry run of a binding", "requestBody": {"content": {"application/json": {"schema": {"$ref": "#/components/schemas/Binding"}}}}, "responses": {"200": {"description": "Plan: {binding, steps: [{kind, interface, key, receiver, role, params, missing, name, marker, note}], warnings}"}, "422": {"description": "invalid"}}}},
+    "/api/v1/bindings/remove-all": {"post": {"summary": "Remove every binding (admin); ?forget=1 leaves the links", "responses": {"200": {"description": "{removed}"}, "502": {"description": "{removed, error}"}}}},
+    "/api/v1/bindings/{id}": {
+      "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+      "get": {"summary": "One binding", "responses": {"200": {"description": "View"}, "404": {"description": "unknown"}}},
+      "patch": {"summary": "Change the senders and the step interval (no link write; admin)", "requestBody": {"content": {"application/json": {"schema": {"type": "object", "properties": {"senders": {"type": "array", "items": {"$ref": "#/components/schemas/Sender"}}, "step_interval_ms": {"type": "integer"}}}}}}, "responses": {"200": {"description": "View"}, "422": {"description": "invalid"}}},
+      "delete": {"summary": "Remove the binding: both links, the markers, the addon's names (admin); ?forget=1 leaves the links", "responses": {"200": {"description": "Result"}, "404": {"description": "unknown"}, "502": {"description": "a write failed"}}}
+    },
+    "/api/v1/bindings/{id}/remove-plan": {"get": {"summary": "The dry run of a removal (?forget=1)", "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "Plan"}}}},
+    "/api/v1/bindings/{id}/reapply": {"post": {"summary": "Write the profile again after a change elsewhere (admin)", "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "Result"}}}},
+    "/api/v1/bindings/{id}/press": {"post": {"summary": "Press one of the binding's keys (a test)", "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}], "requestBody": {"content": {"application/json": {"schema": {"type": "object", "properties": {"direction": {"enum": ["up", "down"]}, "datapoint": {"enum": ["PRESS_SHORT", "PRESS_LONG"]}}}}}}, "responses": {"200": {"description": "{ok}"}}}},
+    "/api/v1/foreign": {"get": {"summary": "Links from virtual keys to dimmers and blinds that no binding owns, classified", "responses": {"200": {"description": "{links: [{interface, key, key_name, Receiver, link, profile: {long, short, role, step, on_level}, error}]}"}}}},
+    "/api/v1/foreign/adopt": {"post": {"summary": "Adopt two such links as a binding: marks the keys, writes no link (admin)", "requestBody": {"content": {"application/json": {"schema": {"type": "object", "properties": {"interface": {"type": "string"}, "target": {"type": "string"}, "up": {"type": "string"}, "down": {"type": "string"}, "senders": {"type": "array", "items": {"$ref": "#/components/schemas/Sender"}}}}}}}, "responses": {"201": {"description": "Result"}, "422": {"description": "not adoptable"}}}},
+    "/api/v1/import/parse": {"post": {"summary": "Resolve a pasted Node-RED mapping ('<sender name>': '<key name>' pairs) against the system's names", "requestBody": {"content": {"application/json": {"schema": {"type": "object", "properties": {"text": {"type": "string"}}}}}}, "responses": {"200": {"description": "{entries: [{sender_name, key_name, sender, key_interface, key, binding, role, error}]}"}}}},
+    "/api/v1/import/apply": {"post": {"summary": "Add the resolved senders to their bindings (admin)", "requestBody": {"content": {"application/json": {"schema": {"type": "object", "properties": {"entries": {"type": "array"}}}}}}, "responses": {"200": {"description": "{added, skipped, error?}"}}}},
+    "/api/v1/check": {"post": {"summary": "Compare every binding's links with its profile now", "responses": {"200": {"description": "{bindings: [View]}"}}}},
+    "/api/v1/settings": {
+      "get": {"summary": "The settings", "responses": {"200": {"description": "Settings"}}},
+      "put": {"summary": "Store the settings (admin)", "requestBody": {"content": {"application/json": {"schema": {"$ref": "#/components/schemas/Settings"}}}}, "responses": {"200": {"description": "Settings"}}}
+    },
+    "/api/v1/stream": {"get": {"summary": "Server-sent events: press (any key channel's PRESS_*), level, binding, check", "responses": {"200": {"description": "text/event-stream"}}}}
+  },
+  "components": {
+    "schemas": {
+      "Sender": {"type": "object", "properties": {"interface": {"type": "string"}, "address": {"type": "string"}, "role": {"enum": ["up", "down", "both"]}, "usage": {"type": "object", "description": "read only: the value usage the addon reported for an HmIP key (reportValueUsage of PRESS_SHORT and PRESS_LONG): {state: reported|pending|failed|released, detail, at}", "properties": {"state": {"type": "string"}, "detail": {"type": "string"}, "at": {"type": "string"}}}}},
+      "Binding": {"type": "object", "properties": {
+        "id": {"type": "string", "description": "optional; derived from the target address"},
+        "target": {"type": "object", "properties": {"interface": {"type": "string"}, "address": {"type": "string"}}},
+        "mode": {"enum": ["two-key", "one-key"]},
+        "up": {"type": "string", "description": "optional; the highest free key"},
+        "down": {"type": "string", "description": "optional; the next free key"},
+        "senders": {"type": "array", "items": {"$ref": "#/components/schemas/Sender"}},
+        "options": {"type": "object", "properties": {"on_level": {"type": "number"}, "step": {"type": "number"}, "travel": {"type": "number"}, "min_level": {"type": "number"}, "max_level": {"type": "number"}}},
+        "step_interval_ms": {"type": "integer"}
+      }},
+      "Settings": {"type": "object", "properties": {"step_interval_ms": {"type": "integer"}, "hold_timeout_ms": {"type": "integer"}, "log_presses": {"type": "boolean"}, "keep_usages": {"type": "boolean", "description": "leave the value usages of HmIP senders registered when a binding is removed"}}}
+    }
+  }
+}

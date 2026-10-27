@@ -1,0 +1,33 @@
+{
+  "format": 1,
+  "id": "longpressdim",
+  "name": "Long press dim",
+  "description": {
+    "de": "Dimmen und Rollläden fahren per langem Tastendruck über Schnittstellen hinweg: verknüpft freie virtuelle Tasten mit Dimmern und Rollladenaktoren und leitet die Tastendrücke von Tastern anderer Schnittstellen weiter.",
+    "en": "Dim lights and drive blinds by holding a key across interfaces: links free virtual keys to dimmers and blind actuators and relays the presses of keys on other interfaces."
+  },
+  "homepage": "https://github.com/hobbyquaker/ccu-addon-longpressdim",
+  "licence": "MIT",
+  "release": {
+    "github": "hobbyquaker/ccu-addon-longpressdim",
+    "asset": "longpressdim-{arch}-{version}.tar.gz"
+  },
+  "requires": {
+    "architectures": ["aarch64", "x86_64", "armv7l"]
+  },
+  "ui": {
+    "icon": "longpressdim/www/icon.svg",
+    "icon_dark": "longpressdim/www/icon-dark.svg",
+    "settings_url": "/addons/longpressdim-config/settings.cgi",
+    "session_header": true
+  },
+  "runtime": {
+    "daemon": true,
+    "needs": [],
+    "api_scopes": ["rpc:read", "rpc:operate", "rpc:configure", "meta:read", "meta:write"],
+    "note": {
+      "de": "Liest Geräteliste, Verknüpfungen und Ereignisstrom der Funkschnittstellen. Legt Direktverknüpfungen von virtuellen Tasten zu Dimmern und Rollladenaktoren an, schreibt deren Verknüpfungsparameter und drückt die virtuellen Tasten (nur die, die es selbst verwaltet). Benennt die verwendeten virtuellen Tasten und markiert sie in den Metadaten. Kontaktiert nichts außerhalb des Systems.",
+      "en": "Reads the device lists, the links and the event stream of the radio interfaces. Creates direct links from virtual keys to dimmers and blind actuators, writes their link parameters and presses the virtual keys (only the ones it manages itself). Names the virtual keys it uses and marks them in the metadata. Contacts nothing outside the system."
+    }
+  }
+}

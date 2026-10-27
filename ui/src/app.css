@@ -1,0 +1,266 @@
+/* The app's own rules on top of occulite-ui's tokens: the page frame, the status pills, the
+   editor forms. Colours are the kit's custom properties only, so dark mode comes with them. */
+
+html,
+body,
+#app {
+    height: 100%;
+    margin: 0;
+}
+
+.lpd-app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+}
+
+.lpd-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 12px 0;
+    flex-wrap: wrap;
+}
+
+.lpd-header h1 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0 4px 0 0;
+}
+
+.lpd-header .lpd-spacer {
+    flex: 1;
+}
+
+.lpd-page {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 8px 12px 12px;
+    overflow: auto;
+}
+
+.lpd-table {
+    flex: 1;
+    min-height: 240px;
+}
+
+.lpd-toolbar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+/* a pill keeps its box across states: fixed width, the text cut with a tooltip */
+.lpd-pill {
+    display: inline-block;
+    box-sizing: border-box;
+    width: 9em;
+    padding: 0 8px;
+    border-radius: 999px;
+    font-size: 0.85em;
+    line-height: 1.6;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border: 1px solid var(--hmm-border, #8884);
+    color: var(--hmm-fg, inherit);
+    background: var(--hmm-surface-2, transparent);
+}
+
+.lpd-pill.active {
+    border-color: var(--hmm-success, #2a8a3e);
+    color: var(--hmm-success, #2a8a3e);
+}
+
+.lpd-pill.pending,
+.lpd-pill.unknown {
+    border-color: var(--hmm-info, #2c6fb3);
+    color: var(--hmm-info, #2c6fb3);
+}
+
+.lpd-pill.changed,
+.lpd-pill.missing-link {
+    border-color: var(--hmm-warning, #b7791f);
+    color: var(--hmm-warning, #b7791f);
+}
+
+.lpd-pill.error {
+    border-color: var(--hmm-danger, #c0392b);
+    color: var(--hmm-danger, #c0392b);
+}
+
+.lpd-pill.small {
+    width: 6.5em;
+}
+
+.lpd-banner {
+    margin: 0 12px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--hmm-warning, #b7791f);
+    background: var(--hmm-surface-2, transparent);
+}
+
+.lpd-banner.info {
+    border-color: var(--hmm-border, #8884);
+}
+
+:root {
+    --lpd-panel-gap: var(--hmm-form-section-gap, 14px);
+}
+
+.lpd-card {
+    max-width: 52rem;
+    padding: 12px 14px;
+    margin-bottom: var(--lpd-panel-gap);
+    border: 1px solid var(--hmm-border, #8884);
+    border-radius: 8px;
+    background: var(--hmm-surface, transparent);
+}
+
+.lpd-card h2 {
+    font-size: 0.95rem;
+    margin: 0 0 8px;
+}
+
+.lpd-kv {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 4px 16px;
+    margin: 0;
+}
+
+.lpd-kv dt {
+    opacity: 0.75;
+}
+
+.lpd-kv dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.lpd-form {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 8px 12px;
+    align-items: center;
+}
+
+.lpd-form label.lpd-label {
+    opacity: 0.85;
+}
+
+.lpd-form input[type='text'],
+.lpd-form input[type='number'],
+.lpd-form select,
+.lpd-form textarea {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.lpd-form .lpd-full {
+    grid-column: 1 / -1;
+}
+
+.lpd-mono {
+    font-family: var(--hmm-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+    font-size: 0.9em;
+}
+
+.lpd-muted {
+    opacity: 0.7;
+}
+
+.lpd-truncate {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+}
+
+.lpd-link {
+    background: none;
+    border: 0;
+    padding: 0;
+    color: var(--hmm-link, var(--hmm-info, #2c6fb3));
+    cursor: pointer;
+    font: inherit;
+    text-decoration: underline;
+}
+
+.lpd-cell-button {
+    font-size: 0.85em;
+    padding: 1px 8px;
+    line-height: 1.5;
+    white-space: nowrap;
+}
+
+.lpd-dialog-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.lpd-empty {
+    opacity: 0.75;
+    margin: 12px 0;
+}
+
+.lpd-steps {
+    margin: 8px 0;
+    padding-left: 1.2em;
+}
+
+.lpd-steps li {
+    margin-bottom: 4px;
+}
+
+.lpd-params {
+    margin: 2px 0 0 0;
+    font-size: 0.85em;
+    opacity: 0.85;
+    overflow-wrap: anywhere;
+}
+
+.lpd-warn {
+    color: var(--hmm-warning, #b7791f);
+}
+
+.lpd-danger {
+    color: var(--hmm-danger, #c0392b);
+}
+
+pre.lpd-code {
+    margin: 4px 0 8px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--hmm-border, #8884);
+    background: var(--hmm-surface-2, transparent);
+    font-size: 0.82em;
+    overflow: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.lpd-chip {
+    display: inline-block;
+    padding: 0 6px;
+    margin: 0 4px 2px 0;
+    border-radius: 4px;
+    border: 1px solid var(--hmm-border, #8884);
+    font-size: 0.85em;
+    white-space: nowrap;
+}
+
+.lpd-row-actions {
+    display: flex;
+    gap: 6px;
+}

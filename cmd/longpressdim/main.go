@@ -16,6 +16,8 @@ import (
 	"time"
 
 	"github.com/hobbyquaker/ccu-addon-kit/go/addonkit"
+	"github.com/hobbyquaker/ccu-addon-kit/go/addonkit/ccuauth"
+	"github.com/hobbyquaker/ccu-addon-kit/go/ccusource"
 	"github.com/hobbyquaker/ccu-addon-kit/go/litesource"
 	"github.com/hobbyquaker/ccu-addon-longpressdim/docs"
 	"github.com/hobbyquaker/ccu-addon-longpressdim/internal/httpapi"
@@ -38,6 +40,7 @@ func main() {
 	tokenFile := flag.String("token-file", "", "a token file for the system's API (the addon's own token by default)")
 	noSession := flag.Bool("no-session-check", false, "serve without the session check (development on a system that is not openccu-lite)")
 	platform := flag.String("platform", "", "openccu-lite, openccu or ccu3; detected from the system by default")
+	callbackPort := flag.Int("callback-port", 8294, "classic CCU: the loopback port the interface processes send events to")
 	lang := flag.String("lang", "de", "the language of the room names in the API")
 	showVersion := flag.Bool("version", false, "print the version and exit")
 	flag.Parse()
@@ -55,12 +58,12 @@ func main() {
 	if kind == "" {
 		kind = addonkit.Platform()
 	}
-	if err := run(*addonDir, *id, *port, *base, *basePath, *www, *tokenFile, *lang, *noSession, kind); err != nil {
+	if err := run(*addonDir, *id, *port, *base, *basePath, *www, *tokenFile, *lang, *noSession, kind, *callbackPort); err != nil {
 		log.Fatalf("longpressdim: %v", err)
 	}
 }
 
-func run(addonDir, id string, port int, base, basePath, www, tokenFile, lang string, noSession bool, kind addonkit.Kind) error {
+func run(addonDir, id string, port int, base, basePath, www, tokenFile, lang string, noSession bool, kind addonkit.Kind, callbackPort int) error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
@@ -70,39 +73,59 @@ func run(addonDir, id string, port int, base, basePath, www, tokenFile, lang str
 	}
 	settings := store.OpenSettings(addonDir)
 
+	// the system: openccu-lite's APIs, or on a classic CCU the interface processes and ReGa
 	var sys system.System
 	wrap := func(h http.Handler) http.Handler { return h }
-	if kind != addonkit.OpenccuLite {
-		return fmt.Errorf("platform %s: the classic CCU is not supported by this build yet", kind)
-	}
-	var token addonkit.TokenSource
-	if tokenFile != "" {
-		token = &addonkit.FileToken{Path: tokenFile}
-	} else {
-		token = addonkit.AddonToken(id)
-	}
-	lite := litesource.New(base, token)
-	lite.Log = log.Printf
-	for {
-		if _, err := lite.Probe(ctx); err == nil {
-			break
-		} else if err == litesource.ErrNotOpenccuLite {
-			return fmt.Errorf("%s is not openccu-lite", base)
+	if kind == addonkit.OpenccuLite {
+		var token addonkit.TokenSource
+		if tokenFile != "" {
+			token = &addonkit.FileToken{Path: tokenFile}
 		} else {
-			log.Printf("longpressdim: waiting for the system: %v", err)
+			token = addonkit.AddonToken(id)
 		}
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-time.After(5 * time.Second):
+		lite := litesource.New(base, token)
+		lite.Log = log.Printf
+		for {
+			if _, err := lite.Probe(ctx); err == nil {
+				break
+			} else if err == litesource.ErrNotOpenccuLite {
+				return fmt.Errorf("%s is not openccu-lite", base)
+			} else {
+				log.Printf("longpressdim: waiting for the system: %v", err)
+			}
+			select {
+			case <-ctx.Done():
+				return nil
+			case <-time.After(5 * time.Second):
+			}
 		}
-	}
-	sys = system.NewLite(lite, token)
-	if !noSession {
-		c := addonkit.NewChecker(addonkit.SessionOptions{Base: base, Need: addonkit.LevelUser, OnRefused: func(r *http.Request, reason string) {
-			log.Printf("longpressdim: refused %s %s: %s", r.Method, r.URL.Path, reason)
-		}})
-		wrap = c.Handler
+		sys = system.NewLite(lite, token)
+		if !noSession {
+			c := addonkit.NewChecker(addonkit.SessionOptions{Base: base, Need: addonkit.LevelUser, OnRefused: func(r *http.Request, reason string) {
+				log.Printf("longpressdim: refused %s %s: %s", r.Method, r.URL.Path, reason)
+			}})
+			wrap = c.Handler
+		}
+	} else {
+		ccu := ccusource.New(ccusource.Options{ID: id, CallbackPort: callbackPort, SweepEvery: -1, Log: log.Printf})
+		for {
+			if err := ccu.Probe(ctx); err == nil {
+				break
+			}
+			log.Printf("longpressdim: waiting for an interface process of the CCU")
+			select {
+			case <-ctx.Done():
+				return nil
+			case <-time.After(10 * time.Second):
+			}
+		}
+		sys = system.NewCCU(ccu, addonDir)
+		if !noSession {
+			c := ccuauth.New(id, ccuauth.Options{Need: addonkit.LevelUser, OnRefused: func(r *http.Request, reason string) {
+				log.Printf("longpressdim: refused %s %s: %s", r.Method, r.URL.Path, reason)
+			}})
+			wrap = c.Handler
+		}
 	}
 	log.Printf("longpressdim: platform %s", kind)
 

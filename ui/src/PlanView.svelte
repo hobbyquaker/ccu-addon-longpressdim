@@ -22,7 +22,7 @@
 
     function metaWhat(s: Step): string {
         const parts: string[] = [];
-        if (s.name !== undefined && s.name !== null) parts.push(s.name === '' ? t('plan.setMeta.unname') : t('plan.setMeta.name', {name: s.name}));
+        if (s.name !== undefined && s.name !== null) parts.push(s.name === '' || s.name === s.key ? t('plan.setMeta.unname') : t('plan.setMeta.name', {name: s.name}));
         parts.push(s.marker ? t('plan.setMeta.mark') : t('plan.setMeta.unmark'));
         return parts.join(', ');
     }

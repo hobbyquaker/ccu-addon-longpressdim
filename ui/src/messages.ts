@@ -68,7 +68,7 @@ export const MESSAGES: Catalogue = {
     'plan.setMeta.mark': {de: 'als Taste dieser Verknüpfung markieren', en: 'mark as a key of this binding'},
     'plan.setMeta.unmark': {de: 'Markierung entfernen', en: 'remove the marker'},
     'plan.setMeta.name': {de: 'Name „{name}"', en: 'name "{name}"'},
-    'plan.setMeta.unname': {de: 'Name entfernen', en: 'remove the name'},
+    'plan.setMeta.unname': {de: 'Name zurücksetzen', en: 'reset the name'},
     'plan.missing': {de: 'Nicht vorhanden auf diesem Gerät (nicht geschrieben): {params}', en: 'Not on this device (not written): {params}'},
     'plan.warnings': {de: 'Hinweise', en: 'Notes'},
     'role.up-on': {de: 'Ein / heller', en: 'On / brighter'},

@@ -28,6 +28,13 @@ type Key struct {
 	Free bool `json:"free"`
 }
 
+// Unnamed tells whether a channel's name is none: empty, or the system's default - the address
+// itself, or the CCU's "<type> <address>" (openccu-lite's metadata holds an object for every
+// virtual key, named after its address, until the user names it).
+func Unnamed(address, name string) bool {
+	return name == "" || name == address || strings.HasSuffix(name, " "+address)
+}
+
 // Inventory reads the 50 keys of an interface. links and objects are passed in so that one
 // read serves every interface and every key.
 func Inventory(iface string, links []system.Link, objects system.Objects) []Key {
@@ -49,7 +56,7 @@ func Inventory(iface string, links []system.Link, objects system.Objects) []Key 
 		addr := profiles.KeyAddress(iface, n)
 		o := objects.Get(iface, addr)
 		k := Key{N: n, Address: addr, Name: o.Name, Links: byKey[addr], Marker: o.Marker(), Foreign: o.Foreign()}
-		k.Free = len(k.Links) == 0 && k.Name == "" && k.Marker == nil && !k.Foreign
+		k.Free = len(k.Links) == 0 && Unnamed(addr, k.Name) && k.Marker == nil && !k.Foreign
 		out = append(out, k)
 	}
 	return out

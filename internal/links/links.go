@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/hobbyquaker/ccu-addon-longpressdim/internal/keys"
 	"github.com/hobbyquaker/ccu-addon-longpressdim/internal/model"
 	"github.com/hobbyquaker/ccu-addon-longpressdim/internal/profiles"
 	"github.com/hobbyquaker/ccu-addon-longpressdim/internal/system"
@@ -151,7 +152,7 @@ func PlanApply(ctx context.Context, sys system.System, b model.Binding, links []
 		o := objects.Get(b.Target.Interface, key)
 		marker := &system.Marker{Binding: b.ID, Role: dir}
 		meta := Step{Kind: SetMeta, Interface: b.Target.Interface, Key: key, Role: string(role), Marker: marker}
-		if o.Name == "" || strings.HasSuffix(o.Name, " ▲") || strings.HasSuffix(o.Name, " ▼") {
+		if keys.Unnamed(key, o.Name) || strings.HasSuffix(o.Name, " ▲") || strings.HasSuffix(o.Name, " ▼") {
 			n := Name(targetName, dir)
 			if o.Name != n {
 				meta.Name = &n
@@ -178,7 +179,8 @@ func PlanApply(ctx context.Context, sys system.System, b model.Binding, links []
 }
 
 // PlanRemove computes a binding's removal: removeLink for both keys where the link exists, the
-// marker removed, the name cleared when it is the addon's own. forget leaves the links alone
+// marker removed, the name set back to the system's default (the address: the metadata store
+// takes no empty name) when it is the addon's own. forget leaves the links alone
 // (an adopted binding, or the user's choice) and only unmarks the keys.
 func PlanRemove(b model.Binding, links []system.Link, objects system.Objects, forget bool) *Plan {
 	p := &Plan{Binding: b}
@@ -194,8 +196,8 @@ func PlanRemove(b model.Binding, links []system.Link, objects system.Objects, fo
 		o := objects.Get(b.Target.Interface, key)
 		meta := Step{Kind: SetMeta, Interface: b.Target.Interface, Key: key, Role: dir}
 		if strings.HasSuffix(o.Name, " ▲") || strings.HasSuffix(o.Name, " ▼") {
-			empty := ""
-			meta.Name = &empty
+			def := key
+			meta.Name = &def
 		}
 		if m := o.Marker(); m != nil && m.Binding != b.ID {
 			p.Warnings = append(p.Warnings, fmt.Sprintf("%s is marked for the binding %s; its marker stays", key, m.Binding))

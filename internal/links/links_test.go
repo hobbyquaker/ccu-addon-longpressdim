@@ -201,7 +201,7 @@ func TestPlanRemoveAndApply(t *testing.T) {
 	links, _ := system.Links(ctx, f, "HmIP-RF")
 	objects, _ = f.Objects(ctx, "de")
 	rp := PlanRemove(binding(), links, objects, false)
-	if len(rp.Steps) != 4 || rp.Steps[0].Kind != RemoveLink || rp.Steps[1].Kind != SetMeta || rp.Steps[1].Marker != nil || rp.Steps[1].Name == nil || *rp.Steps[1].Name != "" {
+	if len(rp.Steps) != 4 || rp.Steps[0].Kind != RemoveLink || rp.Steps[1].Kind != SetMeta || rp.Steps[1].Marker != nil || rp.Steps[1].Name == nil || *rp.Steps[1].Name != "HmIP-RCV-1:50" {
 		t.Fatalf("remove plan %+v", rp.Steps)
 	}
 	r := Apply(ctx, f, rp)
@@ -212,7 +212,7 @@ func TestPlanRemoveAndApply(t *testing.T) {
 	if len(links) != 0 {
 		t.Error("links remain")
 	}
-	if o := f.Meta["HmIP-RF.HmIP-RCV-1:50"]; o.Name != "" || o.Marker() != nil {
+	if o := f.Meta["HmIP-RF.HmIP-RCV-1:50"]; o.Name != "HmIP-RCV-1:50" || o.Marker() != nil {
 		t.Errorf("meta remains %+v", o)
 	}
 	// forget: links stay, a user's name stays, the marker goes

@@ -27,7 +27,7 @@ func TestInventoryFreeAndPick(t *testing.T) {
 	if len(inv) != 50 || inv[0].N != 1 || inv[49].Address != "HmIP-RCV-1:50" {
 		t.Fatalf("inventory %d", len(inv))
 	}
-	want := map[int]bool{1: false, 2: false, 3: false, 48: false, 49: false, 50: false, 47: true, 4: true}
+	want := map[int]bool{1: false, 2: false, 3: false, 48: false, 49: false, 50: false, 47: true, 4: true, 5: true, 6: true}
 	for n, free := range want {
 		if inv[n-1].Free != free {
 			t.Errorf("key %d free = %v: %+v", n, inv[n-1].Free, inv[n-1])

@@ -731,7 +731,7 @@ func (s *Service) checkKeys(ctx context.Context, b model.Binding, adopting bool)
 				return fmt.Errorf("%s is linked already (%s -> %s)", key, l.Sender, l.Receiver)
 			}
 		}
-		if k.Name != "" && len(k.Links) == 0 {
+		if !keys.Unnamed(key, k.Name) && len(k.Links) == 0 {
 			return fmt.Errorf("%s is named %q: a key with a name is in use somewhere", key, k.Name)
 		}
 	}

@@ -3,7 +3,7 @@
 *[English](README.en.md)*
 
 Dimmen und Rollläden fahren per langem Tastendruck - **über Schnittstellen hinweg**. Ein Addon für
-[openccu-lite](https://github.com/hobbyquaker/openccu-lite) (und, in Vorbereitung, für OpenCCU und die CCU3).
+[openccu-lite](https://github.com/hobbyquaker/openccu-lite), OpenCCU und die CCU3.
 
 ## Das Problem
 
@@ -58,6 +58,16 @@ Es kontaktiert nichts außerhalb des Systems.
 
 Die App ist unter `/addons/longpressdim/` erreichbar, die Einstellungsseite (Weiterleitung, *alle Verknüpfungen
 entfernen*) über den Einstellungen-Knopf des Addons.
+
+## Auf einer CCU3 oder OpenCCU
+
+Dasselbe Paket lässt sich als klassisches Addon installieren (*Einstellungen → Systemsteuerung → Zusatzsoftware*,
+oder `/bin/install_addon` auf OpenCCU). Dort spricht der Dienst direkt mit den Schnittstellenprozessen - per
+XML-RPC auf dem Loopback, mit einem Rückkanal auf Port 8294 für die Tastendrücke - und nimmt Namen und Räume aus der
+ReGaHSS; die Markierung der verwendeten virtuellen Tasten liegt in der eigenen Datei des Addons
+(`var/markers.json`), ihr Name wird in der ReGaHSS gesetzt. Der *Einstellungen*-Knopf des Addons öffnet die
+Einstellungsseite, von dort aus die Anwendung. Auf einer CCU3 mit der Firmware von eQ-3 startet der Dienst mit dem
+Neustart nach der Installation.
 
 ## Deinstallation
 

@@ -3,7 +3,7 @@
 *[Deutsch](README.md)*
 
 Dim lights and drive blinds by holding a key - **across interfaces**. An addon for
-[openccu-lite](https://github.com/hobbyquaker/openccu-lite) (and, in preparation, for OpenCCU and the CCU3).
+[openccu-lite](https://github.com/hobbyquaker/openccu-lite), OpenCCU and the CCU3.
 
 ## The problem
 
@@ -54,6 +54,15 @@ system.
 
 The app is at `/addons/longpressdim/`, the settings page (the relay, *remove all bindings*) behind the addon's
 settings button.
+
+## On a CCU3 or OpenCCU
+
+The same package installs as a classic addon (*Settings → Control panel → Additional software*, or
+`/bin/install_addon` on OpenCCU). There the daemon talks to the interface processes directly - XML-RPC on the
+loopback, with a callback on port 8294 for the key presses - and takes names and rooms from ReGaHSS; the marker of
+the virtual keys it uses lives in the addon's own file (`var/markers.json`), their name is set in ReGaHSS. The addon's
+*Settings* button opens the settings page, which opens the app. On a CCU3 with eQ-3's firmware the daemon starts
+with the reboot after the install.
 
 ## Uninstalling
 

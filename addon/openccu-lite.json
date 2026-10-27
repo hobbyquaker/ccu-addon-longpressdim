@@ -6,8 +6,10 @@
     "de": "Dimmen und Rollläden fahren per langem Tastendruck über Schnittstellen hinweg: verknüpft freie virtuelle Tasten mit Dimmern und Rollladenaktoren und leitet die Tastendrücke von Tastern anderer Schnittstellen weiter.",
     "en": "Dim lights and drive blinds by holding a key across interfaces: links free virtual keys to dimmers and blind actuators and relays the presses of keys on other interfaces."
   },
+  "version": "0.1.0",
   "homepage": "https://github.com/hobbyquaker/ccu-addon-longpressdim",
   "licence": "MIT",
+  "changelog": "https://github.com/hobbyquaker/ccu-addon-longpressdim/blob/main/CHANGELOG.md",
   "release": {
     "github": "hobbyquaker/ccu-addon-longpressdim",
     "asset": "longpressdim-{arch}-{version}.tar.gz"

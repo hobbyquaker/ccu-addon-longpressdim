@@ -403,7 +403,7 @@ func (s *Service) interfaces(ctx context.Context) ([]litesource.Interface, error
 	if err != nil {
 		return nil, err
 	}
-	var out []litesource.Interface
+	out := []litesource.Interface{}
 	for _, i := range all {
 		if profiles.KeyDevice(i.Name) != "" {
 			out = append(out, i)

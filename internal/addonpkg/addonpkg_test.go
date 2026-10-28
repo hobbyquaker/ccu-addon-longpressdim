@@ -8,7 +8,27 @@ import (
 	"path"
 	"strings"
 	"testing"
+
+	"github.com/hobbyquaker/ccu-addon-kit/go/addonkit/manifest"
 )
+
+// The manifest as the system validates it at install, through the kit's strict load (an unknown
+// field fails), with the release notes the Addons page links beside an offered update.
+func TestManifest(t *testing.T) {
+	m, err := manifest.Load("../../addon/openccu-lite.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if m.ID != "longpressdim" || m.Undeclared() || m.Runtime == nil || !m.Runtime.Daemon {
+		t.Fatalf("manifest: %+v", m)
+	}
+	if m.Changelog != "https://github.com/hobbyquaker/ccu-addon-longpressdim/blob/main/CHANGELOG.md" {
+		t.Errorf("changelog: %q", m.Changelog)
+	}
+	if m.Description["de"] == "" || m.Description["en"] == "" {
+		t.Error("the description in both languages")
+	}
+}
 
 // The system's catalogue check reads the manifest's images from the repository at the release tag,
 // beside the manifest (the manifest's directory is taken as the package root), and the install

@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.1.3] - 2026-10-28
 
 - **Every system:** after an update the browser shows the new version of the app at the next normal reload. The
   packages are built reproducibly, so every file has the same date in every version; the app's `index.html` was

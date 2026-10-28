@@ -3,7 +3,7 @@
 #   Builds the addon packages: dist/longpressdim-<arch>-<version>.tar.gz and .sha256 for aarch64,
 #   x86_64 and armv7l (the asset names openccu-lite's catalogue resolves by uname -m).
 #
-#     VERSION=0.1.1 scripts/build.sh            # all three
+#     VERSION=0.1.2 scripts/build.sh            # all three
 #     ARCHES=x86_64 scripts/build.sh            # one
 #     SKIP_UI=1 scripts/build.sh                # keep addon/longpressdim/app and www as they are
 #

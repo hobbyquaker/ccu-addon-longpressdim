@@ -225,6 +225,8 @@ func TestStaticAndGuards(t *testing.T) {
 	h, _, _ := newServer(t, addonkit.LevelUser)
 	if w := call(h, "GET", "/addons/longpressdim/", nil); w.Code != 200 || !strings.Contains(w.Body.String(), "app") {
 		t.Errorf("index %d", w.Code)
+	} else if w.Header().Get("ETag") == "" || w.Header().Get("Last-Modified") != "" || w.Header().Get("Cache-Control") != "no-cache" {
+		t.Errorf("index validators (a content ETag, no mtime): %v", w.Header())
 	}
 	if w := call(h, "GET", "/addons/longpressdim/bindings/x", nil); w.Code != 200 || !strings.Contains(w.Body.String(), "app") {
 		t.Errorf("spa fallback %d", w.Code)

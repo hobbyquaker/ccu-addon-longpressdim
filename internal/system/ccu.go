@@ -24,14 +24,13 @@ type CCU struct {
 	// MarkersFile is var/markers.json.
 	MarkersFile string
 	mu          sync.Mutex
-	clients     map[string]*ccusource.Client
 	markers     map[string]Marker // ref -> marker
 	loaded      bool
 }
 
 // NewCCU makes the classic implementation over a ccusource.
 func NewCCU(src *ccusource.Source, addonDir string) *CCU {
-	return &CCU{Src: src, MarkersFile: filepath.Join(addonDir, "var", "markers.json"), clients: map[string]*ccusource.Client{}}
+	return &CCU{Src: src, MarkersFile: filepath.Join(addonDir, "var", "markers.json")}
 }
 
 var _ System = (*CCU)(nil)
@@ -46,71 +45,10 @@ func (c *CCU) Devices(ctx context.Context, iface string) ([]litesource.DeviceDes
 	return c.Src.Devices(ctx, iface)
 }
 
-func (c *CCU) client(ctx context.Context, iface string) (*ccusource.Client, error) {
-	c.mu.Lock()
-	cl, ok := c.clients[iface]
-	c.mu.Unlock()
-	if ok {
-		return cl, nil
-	}
-	list, err := c.Src.Interfaces(ctx)
-	if err != nil {
-		return nil, err
-	}
-	for _, i := range list {
-		if i.Name == iface && i.URLPath != "" {
-			cl = &ccusource.Client{URL: i.URLPath}
-			c.mu.Lock()
-			c.clients[iface] = cl
-			c.mu.Unlock()
-			return cl, nil
-		}
-	}
-	return nil, fmt.Errorf("unknown interface %q", iface)
-}
-
-// Call implements System: the XML-RPC call to the interface process; Double parameters go as
-// doubles, the answer is re-encoded as JSON.
+// Call implements System: the kit's XML-RPC call to the interface process (Double parameters
+// as doubles, the answer as JSON).
 func (c *CCU) Call(ctx context.Context, iface, method string, params ...any) (json.RawMessage, error) {
-	cl, err := c.client(ctx, iface)
-	if err != nil {
-		return nil, err
-	}
-	conv := make([]any, len(params))
-	for i, p := range params {
-		conv[i] = xmlrpcValue(p)
-	}
-	v, err := cl.Call(ctx, method, conv...)
-	if err != nil {
-		return nil, err
-	}
-	b, err := json.Marshal(v)
-	if err != nil {
-		return nil, err
-	}
-	return b, nil
-}
-
-// xmlrpcValue turns the JSON-oriented parameter values (Double, nested maps) into what the
-// XML-RPC marshaller takes.
-func xmlrpcValue(v any) any {
-	switch x := v.(type) {
-	case litesource.Double:
-		return float64(x)
-	case map[string]any:
-		out := make(map[string]any, len(x))
-		for k, e := range x {
-			out[k] = xmlrpcValue(e)
-		}
-		return out
-	case []any:
-		out := make([]any, len(x))
-		for i, e := range x {
-			out[i] = xmlrpcValue(e)
-		}
-		return out
-	}
-	return v
+	return c.Src.Call(ctx, iface, method, params...)
 }
 
 // Subscribe implements System over the callback server.

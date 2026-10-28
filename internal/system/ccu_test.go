@@ -13,7 +13,6 @@ import (
 	"testing"
 
 	"github.com/hobbyquaker/ccu-addon-kit/go/ccusource"
-	"github.com/hobbyquaker/ccu-addon-kit/go/litesource"
 )
 
 // a classic CCU in miniature: one XML-RPC process (listMethods, listDevices, getLinks,
@@ -201,12 +200,7 @@ func TestCCUCallAndObjects(t *testing.T) {
 	}
 }
 
-func TestXMLRPCValue(t *testing.T) {
-	v := xmlrpcValue(map[string]any{"a": litesource.Double(0.5), "b": []any{litesource.Double(1), 2}, "c": "x"})
-	m := v.(map[string]any)
-	if m["a"] != 0.5 || m["b"].([]any)[0] != 1.0 || m["b"].([]any)[1] != 2 || m["c"] != "x" {
-		t.Errorf("%v", m)
-	}
+func TestRegaStringAndMarker(t *testing.T) {
 	if regaString(`a"b\c`) != `"a\"b\\c"` {
 		t.Error(regaString(`a"b\c`))
 	}

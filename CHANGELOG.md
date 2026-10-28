@@ -6,6 +6,10 @@
   packages are built reproducibly, so every file has the same date in every version; the app's `index.html` was
   answered by that date, the browser's check said "unchanged", and it kept the old page until its cache was cleared.
   The page is now checked by its content.
+- **openccu-lite:** a binding's metadata step no longer fails when the key's name and marker are already what it
+  writes (the system answers such a write with "not modified", which the addon took for an error).
+- The interface processes on a classic CCU and the metadata on openccu-lite are now reached through ccu-addon-kit, the
+  addon's own clients for them are gone.
 
 ## [0.1.2] - 2026-10-28
 

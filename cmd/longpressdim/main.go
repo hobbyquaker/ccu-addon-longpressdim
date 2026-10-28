@@ -95,7 +95,7 @@ func run(addonDir, id string, port int, base, basePath, www, tokenFile, lang str
 			}
 			return fmt.Errorf("%s is not openccu-lite", base)
 		}
-		sys = system.NewLite(lite, token)
+		sys = system.NewLite(lite)
 		if !noSession {
 			c := addonkit.NewChecker(addonkit.SessionOptions{Base: base, Need: addonkit.LevelUser, OnRefused: func(r *http.Request, reason string) {
 				log.Printf("longpressdim: refused %s %s: %s", r.Method, r.URL.Path, reason)

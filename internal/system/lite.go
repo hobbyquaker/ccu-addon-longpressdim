@@ -1,32 +1,22 @@
 package system
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
 	"strings"
-	"time"
 
-	"github.com/hobbyquaker/ccu-addon-kit/go/addonkit"
 	"github.com/hobbyquaker/ccu-addon-kit/go/litesource"
 )
 
-// Lite is openccu-lite: lite-rpc for the processes, the metadata API for names and markers.
+// Lite is openccu-lite: lite-rpc for the processes, the metadata API for names and markers,
+// both through ccu-addon-kit's litesource client (the addon's token).
 type Lite struct {
 	Client *litesource.Client
-	// HTTP is the client for the metadata writes (the addon's token); nil: one from Token.
-	HTTP  *http.Client
-	Token addonkit.TokenSource
 }
 
-// NewLite makes the openccu-lite implementation over a litesource client and its token.
-func NewLite(c *litesource.Client, token addonkit.TokenSource) *Lite {
-	return &Lite{Client: c, Token: token, HTTP: &http.Client{Transport: &addonkit.AuthTransport{Source: token}, Timeout: 15 * time.Second}}
-}
+// NewLite makes the openccu-lite implementation over a litesource client.
+func NewLite(c *litesource.Client) *Lite { return &Lite{Client: c} }
 
 var _ System = (*Lite)(nil)
 
@@ -72,32 +62,17 @@ func (l *Lite) Objects(ctx context.Context, lang string) (Objects, error) {
 	return out, nil
 }
 
-// SetObject implements System: PATCH /api/meta/v1/objects/{ref} with the name and the addon's
-// namespace (null removes it; the store merges per namespace).
+// SetObject implements System: the name and the addon's namespace through the kit's metadata
+// write (nil removes the namespace; the store merges per namespace, and a write that changes
+// nothing is not an error).
 func (l *Lite) SetObject(ctx context.Context, iface, address string, name *string, marker *Marker) error {
-	body := map[string]any{"meta": map[string]any{Namespace: marker}}
-	if name != nil {
-		body["name"] = *name
+	var ns any
+	if marker != nil {
+		ns = marker
 	}
-	b, err := json.Marshal(body)
+	_, _, err := l.Client.Meta().PatchObject(ctx, iface, address, litesource.ObjectPatch{Name: name, Meta: map[string]any{Namespace: ns}})
 	if err != nil {
-		return err
-	}
-	u := strings.TrimRight(l.Client.Base(), "/") + "/api/meta/v1/objects/" + url.PathEscape(iface+"."+address)
-	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, u, bytes.NewReader(b))
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.GetBody = func() (io.ReadCloser, error) { return io.NopCloser(bytes.NewReader(b)), nil }
-	res, err := l.HTTP.Do(req)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-	if res.StatusCode >= 300 {
-		msg, _ := io.ReadAll(io.LimitReader(res.Body, 4096))
-		return fmt.Errorf("metadata %s %s: %s: %s", iface, address, res.Status, strings.TrimSpace(string(msg)))
+		return fmt.Errorf("metadata %s %s: %w", iface, address, err)
 	}
 	return nil
 }

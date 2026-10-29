@@ -8,8 +8,8 @@ Dimmen und Rollläden fahren per langem Tastendruck - **über Schnittstellen hin
 ## Das Problem
 
 Eine Direktverknüpfung zwischen einem Taster und einem Dimmer gibt es nur innerhalb einer Schnittstelle: BidCos-RF
-mit BidCos-RF, HmIP mit HmIP, BidCos-Wired mit BidCos-Wired. Ein HmIP-Wandtaster kann einen Wired-Dimmer also
-nicht direkt hoch- und runterdimmen, und ein BidCos-RF-Dimmer nicht von einem HmIP-Taster bedient werden. Wer es
+mit BidCos-RF, HmIP mit HmIP, BidCos-Wired mit BidCos-Wired. Ein HmIP-Wandtaster kann einen BidCos-Wired-Dimmer
+also nicht direkt hoch- und runterdimmen, und ein BidCos-RF-Dimmer nicht von einem HmIP-Taster bedient werden. Wer es
 trotzdem will, baut sich den Umweg über die **virtuellen Tasten** (jede Schnittstelle hat 50 davon: `BidCoS-RF:1…50`,
 `BidCoS-Wir:1…50`, `HmIP-RCV-1:1…50`): die virtuelle Taste wird mit dem Dimmer direkt verknüpft, und eine Logik
 leitet die Tastendrücke des echten Tasters an die virtuelle weiter.

@@ -8,7 +8,7 @@ Dim lights and drive blinds by holding a key - **across interfaces**. An addon f
 ## The problem
 
 A direct link between a key and a dimmer exists only inside one interface: BidCos-RF with BidCos-RF, HmIP with HmIP,
-BidCos-Wired with BidCos-Wired. An HmIP wall switch cannot dim a wired dimmer up and down, a BidCos-RF dimmer cannot be
+BidCos-Wired with BidCos-Wired. An HmIP wall switch cannot dim a BidCos-Wired dimmer up and down, a BidCos-RF dimmer cannot be
 driven from an HmIP key. Whoever wants it anyway takes the detour over the **virtual keys** (every interface has 50 of
 them: `BidCoS-RF:1…50`, `BidCoS-Wir:1…50`, `HmIP-RCV-1:1…50`): the virtual key is linked to the dimmer directly, and
 some logic relays the real key's presses to the virtual one.

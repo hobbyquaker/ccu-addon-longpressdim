@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.4] - 2026-11-17
+
+- **openccu-lite:** a program can use the addon's API with an API token of the scope `addon:longpressdim` (made under
+  *System → Remote access → API tokens*), without a login; it counts as a user's session, and a Full-access token as
+  an administrator's. Before, the addon refused every token although the system let it through.
+
 ## [0.1.3] - 2026-10-28
 
 - **Every system:** after an update the browser shows the new version of the app at the next normal reload. The

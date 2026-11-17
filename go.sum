@@ -1,2 +1,4 @@
 github.com/hobbyquaker/ccu-addon-kit/go v0.0.0-20261028120208-83d33c47d7ac h1:Wz5ICuHqUlmlJf1iywIftHY9WM7JIDQvsymeXUNV6hg=
 github.com/hobbyquaker/ccu-addon-kit/go v0.0.0-20261028120208-83d33c47d7ac/go.mod h1:IShVNKzAsWAa9IkyYUP/iXwaG1DoxoEGbgODw1XeCTE=
+github.com/hobbyquaker/ccu-addon-kit/go v0.0.0-20261117205411-d8a1f487ff8d h1:6lJNvXiF2hwrHESodBsspFWibMud+dBhs3fgeTzbDuM=
+github.com/hobbyquaker/ccu-addon-kit/go v0.0.0-20261117205411-d8a1f487ff8d/go.mod h1:IShVNKzAsWAa9IkyYUP/iXwaG1DoxoEGbgODw1XeCTE=

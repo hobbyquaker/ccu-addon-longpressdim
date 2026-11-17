@@ -5,6 +5,11 @@ CCU the kit's session check). Writes carry the kit's CSRF header `X-CCU-Addon-Re
 need an administrator session. `openapi.json` (served at `api/v1/openapi.json`) is the specification; a test holds
 the server's routes to it.
 
+**A program with an API token** (openccu-lite): make one under *System → Remote access → API tokens* with the scope
+`addon:longpressdim` (listed under *Addons*) and send it as `Authorization: Bearer olt_…`, no login. It counts as a
+user's session; the *admin* routes need a token with Full access (`*`). The token's `ips` restriction applies at the
+gate as for the system's API. On a classic CCU there are no API tokens.
+
 **Every write to the system is planned first.** `POST bindings/plan` answers the dry run - the links to create, the
 link parameters that differ from what the actuator has, the keys to name and mark - and `POST bindings` executes the
 same plan and answers the outcome per step (`done`, `pending`, `skipped`, `failed`). An HmIP process that answers

@@ -97,7 +97,7 @@ func run(addonDir, id string, port int, base, basePath, www, tokenFile, lang str
 		}
 		sys = system.NewLite(lite)
 		if !noSession {
-			c := addonkit.NewChecker(addonkit.SessionOptions{Base: base, Need: addonkit.LevelUser, OnRefused: func(r *http.Request, reason string) {
+			c := addonkit.NewChecker(addonkit.SessionOptions{Base: base, Need: addonkit.LevelUser, AddonID: id, OnRefused: func(r *http.Request, reason string) {
 				log.Printf("longpressdim: refused %s %s: %s", r.Method, r.URL.Path, reason)
 			}})
 			wrap = c.Handler

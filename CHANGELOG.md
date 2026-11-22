@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.5] - 2026-11-22
+
+- **Every system:** the addon takes events only from the interfaces where buttons and dimmers or blinds can be
+  bound (BidCos-RF, BidCos-Wired, HmIP-RF). Before, it was registered for the events of every interface, among them
+  VirtualDevices (the HmIP groups), whose events it never uses: that interface had to deliver each of them to the
+  addon for nothing, and the addon appeared among its subscribers. **OpenCCU and CCU3:** a registration an earlier
+  version left behind on the other interfaces is removed when the addon starts.
+
 ## [0.1.4] - 2026-11-17
 
 - **openccu-lite:** a program can use the addon's API with an API token of the scope `addon:longpressdim` (made under

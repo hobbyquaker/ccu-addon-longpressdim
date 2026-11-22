@@ -184,11 +184,18 @@ func (s *Service) stream(ctx context.Context) {
 	s.released = true
 	s.mu.Unlock()
 	if r, ok := s.o.System.(system.Releaser); ok && release {
+		// also when no interface is left to subscribe to: a CCU with VirtualDevices alone
+		// still holds what an older version registered there
 		go func() {
 			if rel := r.Release(ctx, names); len(rel) > 0 {
 				s.o.Log("longpressdim: no events taken from %s", strings.Join(rel, ", "))
 			}
 		}()
+	}
+	if len(names) == 0 {
+		// an empty filter would be every interface
+		s.setStream(false, "no interface with a virtual remote")
+		return
 	}
 	sctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -226,19 +233,16 @@ func (s *Service) stream(ctx context.Context) {
 // where the senders are (their presses, and the sender search of the editor that listens to
 // every key) and where the targets are (their levels, their device changes). VirtualDevices and
 // the other interfaces send nothing the addon uses - a subscription there would only make the
-// process deliver every event of its groups to a callback that drops them. Never empty: an
-// empty filter is every interface.
+// process deliver every event of its groups to a callback that drops them. The caller never
+// subscribes with an empty list: an empty filter is every interface.
 func (s *Service) streamInterfaces(ctx context.Context) ([]string, error) {
 	ifaces, err := s.interfaces(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("the interfaces: %w", err)
 	}
-	var names []string
+	names := []string{}
 	for _, i := range ifaces {
 		names = append(names, i.Name)
-	}
-	if len(names) == 0 {
-		return nil, errors.New("no interface with a virtual remote")
 	}
 	return names, nil
 }

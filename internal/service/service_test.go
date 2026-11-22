@@ -440,18 +440,32 @@ func TestStreamFilteredRelayAndReconnect(t *testing.T) {
 	}
 }
 
-// Without an interface that has a virtual remote the stream does not start: an empty filter
-// would be every interface. A failing interface list is the stream's error as well.
+// Without an interface that has a virtual remote the stream does not start (an empty filter
+// would be every interface), and the release still runs. A failing interface list is the
+// stream's error, and nothing is released.
 func TestStreamWithoutInterfaces(t *testing.T) {
 	f := newFake()
 	f.Ifaces = []litesource.Interface{{Name: "VirtualDevices", Running: true}}
 	s := newService(t, f)
 	s.stream(context.Background())
-	if c, _, rel := f.Subscriptions(); c != 0 || len(rel) != 0 {
-		t.Errorf("subscribed %d, released %v", c, rel)
-	}
 	if h := s.Health(); h.Stream || !strings.Contains(h.Detail, "virtual remote") {
 		t.Errorf("health %+v", h)
+	}
+	// no subscription, but the release all the same: an older version's registration on
+	// VirtualDevices goes even where nothing is left to subscribe to
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		c, _, rel := f.Subscriptions()
+		if c != 0 {
+			t.Fatalf("subscribed %d times", c)
+		}
+		if len(rel) == 1 && len(rel[0]) == 0 {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("released %v", rel)
+		}
+		time.Sleep(5 * time.Millisecond)
 	}
 	f2 := newFake()
 	f2.Fail["interfaces"] = errors.New("down")
@@ -459,6 +473,9 @@ func TestStreamWithoutInterfaces(t *testing.T) {
 	s2.stream(context.Background())
 	if h := s2.Health(); h.Stream || !strings.Contains(h.Detail, "down") {
 		t.Errorf("health %+v", h)
+	}
+	if c, _, rel := f2.Subscriptions(); c != 0 || len(rel) != 0 {
+		t.Errorf("subscribed %d, released %v", c, rel)
 	}
 }
 

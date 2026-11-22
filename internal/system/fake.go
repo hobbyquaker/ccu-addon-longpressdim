@@ -51,6 +51,8 @@ type Fake struct {
 	// SubscribeFilter is the filter of the last Subscribe.
 	SubscribeFilter litesource.Filter
 	Subscribed      int
+	// Released records the keep list of every Release.
+	Released [][]string
 }
 
 // NewFake makes an empty fake with the three interfaces.
@@ -289,6 +291,34 @@ func (f *Fake) Call(ctx context.Context, iface, method string, params ...any) (j
 		return json.RawMessage("true"), nil
 	}
 	return nil, fmt.Errorf("fake: unknown method %s", method)
+}
+
+var _ Releaser = (*Fake)(nil)
+
+// Release implements Releaser: it records keep and answers the other interfaces.
+func (f *Fake) Release(ctx context.Context, keep []string) []string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.Released = append(f.Released, append([]string(nil), keep...))
+	kept := map[string]bool{}
+	for _, k := range keep {
+		kept[k] = true
+	}
+	var out []string
+	for _, i := range f.Ifaces {
+		if !kept[i.Name] {
+			out = append(out, i.Name)
+		}
+	}
+	return out
+}
+
+// Subscriptions answers how often Subscribe was called, its last filter and the keep lists
+// of every Release (under the lock: the service calls them from its goroutines).
+func (f *Fake) Subscriptions() (int, litesource.Filter, [][]string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.Subscribed, f.SubscribeFilter, append([][]string(nil), f.Released...)
 }
 
 // Subscribe implements System over the Events channel.

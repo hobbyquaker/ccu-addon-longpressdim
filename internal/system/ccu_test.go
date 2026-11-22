@@ -4,15 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/hobbyquaker/ccu-addon-kit/go/ccusource"
+	"github.com/hobbyquaker/ccu-addon-kit/go/litesource"
 )
 
 // a classic CCU in miniature: one XML-RPC process (listMethods, listDevices, getLinks,
@@ -24,6 +28,7 @@ type miniCCU struct {
 	params  map[string]any
 	renamed map[string]string
 	regaOut string
+	inits   [][]any
 }
 
 func (m *miniCCU) xmlrpc(w http.ResponseWriter, r *http.Request) {
@@ -53,6 +58,10 @@ func (m *miniCCU) xmlrpc(w http.ResponseWriter, r *http.Request) {
 		m.mu.Unlock()
 	case "reportValueUsage":
 		out = true
+	case "init":
+		m.mu.Lock()
+		m.inits = append(m.inits, params)
+		m.mu.Unlock()
 	case "boom":
 		w.Write(ccusource.MarshalFault(-2, "nope"))
 		return
@@ -207,5 +216,85 @@ func TestRegaStringAndMarker(t *testing.T) {
 	b, _ := json.Marshal(Marker{Binding: "x", Role: "up"})
 	if string(b) != `{"binding":"x","role":"up"}` {
 		t.Error(string(b))
+	}
+}
+
+// Release takes the callback back from every process but the kept ones (init with an empty
+// id); without a callback URL it does nothing.
+func TestCCURelease(t *testing.T) {
+	m := &miniCCU{}
+	srv := httptest.NewServer(http.HandlerFunc(m.xmlrpc))
+	t.Cleanup(srv.Close)
+	dir := t.TempDir()
+	u := strings.Replace(srv.URL, "http://", "xmlrpc://", 1)
+	list := filepath.Join(dir, "InterfacesList.xml")
+	os.WriteFile(list, []byte(`<interfaces><ipc><name>BidCos-RF</name><url>`+u+`</url></ipc><ipc><name>VirtualDevices</name><url>`+u+`/groups</url></ipc><ipc><name>HmIP-RF</name><url>`+u+`</url></ipc></interfaces>`), 0o644)
+	src := ccusource.New(ccusource.Options{ID: "lpd", InterfacesList: list, Log: func(string, ...any) {}})
+	c := NewCCU(src, dir)
+	ctx := context.Background()
+	if got := c.Release(ctx, []string{"BidCos-RF"}); got != nil {
+		t.Errorf("released without a callback URL: %v", got)
+	}
+	c.CallbackURL = "http://127.0.0.1:8294"
+	got := c.Release(ctx, []string{"BidCos-RF", "HmIP-RF"})
+	if strings.Join(got, ",") != "VirtualDevices" {
+		t.Errorf("released %v", got)
+	}
+	if len(m.inits) != 1 || len(m.inits[0]) != 2 || m.inits[0][0] != "http://127.0.0.1:8294" || m.inits[0][1] != "" {
+		t.Errorf("inits %v", m.inits)
+	}
+	// a process that does not answer is not counted
+	srv.Close()
+	if got := c.Release(ctx, []string{"BidCos-RF"}); len(got) != 0 {
+		t.Errorf("released from a dead process: %v", got)
+	}
+}
+
+// The classic path end to end: a subscription filtered to the interfaces with a virtual remote
+// registers its callback with those processes only, VirtualDevices gets nothing but the release
+// of an older version's registration, and the end of the subscription takes the callback back.
+func TestCCUSubscribeSkipsVirtualDevices(t *testing.T) {
+	rf, vd := &miniCCU{}, &miniCCU{}
+	rfSrv := httptest.NewServer(http.HandlerFunc(rf.xmlrpc))
+	t.Cleanup(rfSrv.Close)
+	vdSrv := httptest.NewServer(http.HandlerFunc(vd.xmlrpc))
+	t.Cleanup(vdSrv.Close)
+	dir := t.TempDir()
+	list := filepath.Join(dir, "InterfacesList.xml")
+	os.WriteFile(list, []byte(`<interfaces><ipc><name>BidCos-RF</name><url>`+strings.Replace(rfSrv.URL, "http://", "xmlrpc://", 1)+`</url></ipc><ipc><name>VirtualDevices</name><url>`+strings.Replace(vdSrv.URL, "http://", "xmlrpc://", 1)+`</url></ipc></interfaces>`), 0o644)
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	port := l.Addr().(*net.TCPAddr).Port
+	l.Close()
+	src := ccusource.New(ccusource.Options{ID: "longpressdim", InterfacesList: list, CallbackPort: port, SweepEvery: -1, Log: func(string, ...any) {}})
+	c := NewCCU(src, dir)
+	c.CallbackURL = "http://127.0.0.1:" + strconv.Itoa(port)
+	ctx, cancel := context.WithCancel(context.Background())
+	ch := c.Subscribe(ctx, litesource.Filter{Interfaces: []string{"BidCos-RF"}}, "")
+	select {
+	case m := <-ch:
+		if m.Type != "hello" {
+			t.Fatalf("first message %+v", m)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("no hello")
+	}
+	if got := c.Release(ctx, []string{"BidCos-RF"}); strings.Join(got, ",") != "VirtualDevices" {
+		t.Errorf("released %v", got)
+	}
+	cancel()
+	for range ch {
+	}
+	rf.mu.Lock()
+	defer rf.mu.Unlock()
+	vd.mu.Lock()
+	defer vd.mu.Unlock()
+	if len(rf.inits) != 2 || rf.inits[0][1] != "longpressdim-BidCos-RF" || rf.inits[1][1] != "" || rf.inits[0][0] != c.CallbackURL {
+		t.Errorf("BidCos-RF inits %v", rf.inits)
+	}
+	if len(vd.inits) != 1 || vd.inits[0][0] != c.CallbackURL || vd.inits[0][1] != "" {
+		t.Errorf("VirtualDevices inits %v (a registration, not only the release)", vd.inits)
 	}
 }

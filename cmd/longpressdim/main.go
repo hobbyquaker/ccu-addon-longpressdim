@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -115,7 +116,11 @@ func run(addonDir, id string, port int, base, basePath, www, tokenFile, lang str
 			case <-time.After(10 * time.Second):
 			}
 		}
-		sys = system.NewCCU(ccu, addonDir)
+		cs := system.NewCCU(ccu, addonDir)
+		// the subscription's callback (ccusource registers this URL): the start takes it back
+		// from the processes the addon takes no events from
+		cs.CallbackURL = "http://127.0.0.1:" + strconv.Itoa(callbackPort)
+		sys = cs
 		if !noSession {
 			c := ccuauth.New(id, ccuauth.Options{Need: addonkit.LevelUser, OnRefused: func(r *http.Request, reason string) {
 				log.Printf("longpressdim: refused %s %s: %s", r.Method, r.URL.Path, reason)

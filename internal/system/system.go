@@ -89,6 +89,16 @@ type System interface {
 	Descriptions(ctx context.Context, iface string, addresses []string) (keys map[string]string, sets litesource.ParamsetCache, err error)
 }
 
+// Releaser is a system whose interface processes keep the addon's event registration beyond
+// the addon's own life (a classic CCU: the callback each process got with init stays until it
+// is taken back). Release takes it back from every interface process except keep, so a
+// registration an older version left behind (0.1.4 and before registered with every process,
+// VirtualDevices included) is gone after the start; it answers the processes that took the
+// release. openccu-lite's event stream ends with its connection and needs none.
+type Releaser interface {
+	Release(ctx context.Context, keep []string) []string
+}
+
 // --- helpers over Call --------------------------------------------------------------------
 
 // Links reads every link of an interface: getLinks() without arguments, the one form every

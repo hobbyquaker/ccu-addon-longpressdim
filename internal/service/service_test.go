@@ -351,6 +351,117 @@ func TestRunStreamAndChecker(t *testing.T) {
 	}
 }
 
+// waitSubscribed waits for the n-th Subscribe (and the release that comes with the first).
+func waitSubscribed(t *testing.T, f *system.Fake, n int) (litesource.Filter, [][]string) {
+	t.Helper()
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		c, fl, rel := f.Subscriptions()
+		if c >= n && len(rel) > 0 {
+			return fl, rel
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("subscribed %d times, released %v", c, rel)
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+}
+
+// The event stream takes the interfaces with a virtual remote only - where the senders and
+// the targets are - never VirtualDevices or another process (CUxD): the addon only writes to
+// those, and a subscription there makes the process deliver every event of its groups for
+// nothing. The registrations an older version left there are taken back once per start.
+func TestStreamInterfaces(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		ifaces []string
+		want   []string
+	}{
+		{"classic CCU", []string{"BidCos-RF", "HmIP-RF", "VirtualDevices", "BidCos-Wired", "CUxD"}, []string{"BidCos-RF", "HmIP-RF", "BidCos-Wired"}},
+		{"no wired", []string{"VirtualDevices", "HmIP-RF", "BidCos-RF"}, []string{"HmIP-RF", "BidCos-RF"}},
+		{"HmIP only", []string{"HmIP-RF", "VirtualDevices"}, []string{"HmIP-RF"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := newFake()
+			f.Ifaces = nil
+			for _, n := range tc.ifaces {
+				f.Ifaces = append(f.Ifaces, litesource.Interface{Name: n, Running: true})
+			}
+			s := newService(t, f)
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			go s.stream(ctx)
+			fl, rel := waitSubscribed(t, f, 1)
+			if strings.Join(fl.Interfaces, ",") != strings.Join(tc.want, ",") {
+				t.Errorf("subscribed to %v, want %v", fl.Interfaces, tc.want)
+			}
+			for _, i := range fl.Interfaces {
+				if i == "VirtualDevices" {
+					t.Error("subscribed to VirtualDevices")
+				}
+			}
+			if len(rel) != 1 || strings.Join(rel[0], ",") != strings.Join(tc.want, ",") {
+				t.Errorf("released keeping %v", rel)
+			}
+		})
+	}
+}
+
+// A BidCos sender relays to an HmIP dimmer through the filtered stream; a reconnect subscribes
+// again with the same interfaces and does not release a second time.
+func TestStreamFilteredRelayAndReconnect(t *testing.T) {
+	f := newFake()
+	f.Ifaces = append(f.Ifaces, litesource.Interface{Name: "VirtualDevices", Running: true})
+	s := newService(t, f)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	if _, err := s.Apply(ctx, draft()); err != nil {
+		t.Fatal(err)
+	}
+	done := make(chan struct{})
+	go func() { s.stream(ctx); close(done) }()
+	fl, _ := waitSubscribed(t, f, 1)
+	if strings.Join(fl.Interfaces, ",") != "BidCos-RF,BidCos-Wired,HmIP-RF" {
+		t.Errorf("filter %v", fl.Interfaces)
+	}
+	f.Events <- litesource.Message{Type: "hello", Hello: &litesource.Hello{}}
+	f.Emit("BidCos-RF", "RC:2", "PRESS_LONG", true)
+	waitCalls(t, f, "setValue", 1)
+	if c := f.CallsOf("setValue")[0]; c != "HmIP-RF setValue HmIP-RCV-1:49 PRESS_LONG true" {
+		t.Errorf("relayed %s", c)
+	}
+	close(f.Events)
+	<-done
+	f.Events = make(chan litesource.Message, 64)
+	go s.stream(ctx)
+	fl, rel := waitSubscribed(t, f, 2)
+	if strings.Join(fl.Interfaces, ",") != "BidCos-RF,BidCos-Wired,HmIP-RF" || len(rel) != 1 {
+		t.Errorf("second subscription %v, releases %v", fl.Interfaces, rel)
+	}
+}
+
+// Without an interface that has a virtual remote the stream does not start: an empty filter
+// would be every interface. A failing interface list is the stream's error as well.
+func TestStreamWithoutInterfaces(t *testing.T) {
+	f := newFake()
+	f.Ifaces = []litesource.Interface{{Name: "VirtualDevices", Running: true}}
+	s := newService(t, f)
+	s.stream(context.Background())
+	if c, _, rel := f.Subscriptions(); c != 0 || len(rel) != 0 {
+		t.Errorf("subscribed %d, released %v", c, rel)
+	}
+	if h := s.Health(); h.Stream || !strings.Contains(h.Detail, "virtual remote") {
+		t.Errorf("health %+v", h)
+	}
+	f2 := newFake()
+	f2.Fail["interfaces"] = errors.New("down")
+	s2 := newService(t, f2)
+	s2.stream(context.Background())
+	if h := s2.Health(); h.Stream || !strings.Contains(h.Detail, "down") {
+		t.Errorf("health %+v", h)
+	}
+}
+
 func TestForeignAdoptAndImport(t *testing.T) {
 	f := newFake()
 	s := newService(t, f)

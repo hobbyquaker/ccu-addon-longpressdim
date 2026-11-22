@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/hobbyquaker/ccu-addon-kit/go/ccusource"
 	"github.com/hobbyquaker/ccu-addon-kit/go/litesource"
@@ -23,6 +24,9 @@ type CCU struct {
 	Src *ccusource.Source
 	// MarkersFile is var/markers.json.
 	MarkersFile string
+	// CallbackURL is the callback the subscription registers with the processes
+	// (http://127.0.0.1:<callback port>, ccusource's form); Release takes it back. Empty: no release.
+	CallbackURL string
 	mu          sync.Mutex
 	markers     map[string]Marker // ref -> marker
 	loaded      bool
@@ -54,6 +58,38 @@ func (c *CCU) Call(ctx context.Context, iface, method string, params ...any) (js
 // Subscribe implements System over the callback server.
 func (c *CCU) Subscribe(ctx context.Context, f litesource.Filter, since string) <-chan litesource.Message {
 	return c.Src.Subscribe(ctx, f, since)
+}
+
+var _ Releaser = (*CCU)(nil)
+
+// Release implements Releaser: init with the callback and an empty id, the form that removes a
+// registration, to every interface process not in keep (one that never had one answers it all
+// the same). A process that does not answer is skipped; the next start tries again.
+func (c *CCU) Release(ctx context.Context, keep []string) []string {
+	if c.CallbackURL == "" {
+		return nil
+	}
+	ifaces, err := c.Src.Interfaces(ctx)
+	if err != nil {
+		return nil
+	}
+	kept := map[string]bool{}
+	for _, k := range keep {
+		kept[k] = true
+	}
+	var out []string
+	for _, i := range ifaces {
+		if kept[i.Name] {
+			continue
+		}
+		cctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		_, err := c.Src.Call(cctx, i.Name, "init", c.CallbackURL, "")
+		cancel()
+		if err == nil {
+			out = append(out, i.Name)
+		}
+	}
+	return out
 }
 
 // Descriptions implements System.

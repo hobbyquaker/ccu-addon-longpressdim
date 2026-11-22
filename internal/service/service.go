@@ -112,8 +112,10 @@ type Service struct {
 	checkNow  chan struct{}
 	streamOK  bool
 	streamErr string
-	started   time.Time
-	presses   int64
+	// released: the registrations on the other interfaces were taken back (once per start)
+	released bool
+	started  time.Time
+	presses  int64
 }
 
 // New makes the service; Run starts it.
@@ -172,9 +174,25 @@ func (s *Service) Run(ctx context.Context) {
 }
 
 func (s *Service) stream(ctx context.Context) {
+	names, err := s.streamInterfaces(ctx)
+	if err != nil {
+		s.setStream(false, err.Error())
+		return
+	}
+	s.mu.Lock()
+	release := !s.released
+	s.released = true
+	s.mu.Unlock()
+	if r, ok := s.o.System.(system.Releaser); ok && release {
+		go func() {
+			if rel := r.Release(ctx, names); len(rel) > 0 {
+				s.o.Log("longpressdim: no events taken from %s", strings.Join(rel, ", "))
+			}
+		}()
+	}
 	sctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	ch := s.o.System.Subscribe(sctx, litesource.Filter{}, "")
+	ch := s.o.System.Subscribe(sctx, litesource.Filter{Interfaces: names}, "")
 	for m := range ch {
 		switch m.Type {
 		case "hello":
@@ -202,6 +220,27 @@ func (s *Service) stream(ctx context.Context) {
 		}
 	}
 	s.setStream(false, "the event stream ended")
+}
+
+// streamInterfaces names the interfaces the event stream takes: those with a virtual remote,
+// where the senders are (their presses, and the sender search of the editor that listens to
+// every key) and where the targets are (their levels, their device changes). VirtualDevices and
+// the other interfaces send nothing the addon uses - a subscription there would only make the
+// process deliver every event of its groups to a callback that drops them. Never empty: an
+// empty filter is every interface.
+func (s *Service) streamInterfaces(ctx context.Context) ([]string, error) {
+	ifaces, err := s.interfaces(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("the interfaces: %w", err)
+	}
+	var names []string
+	for _, i := range ifaces {
+		names = append(names, i.Name)
+	}
+	if len(names) == 0 {
+		return nil, errors.New("no interface with a virtual remote")
+	}
+	return names, nil
 }
 
 func (s *Service) setStream(ok bool, detail string) {

@@ -30,6 +30,10 @@
     "note": {
       "de": "Ein BidCos-RF-Taster lässt sich nicht direkt mit einem BidCos-Wired- oder HmIP-Dimmer verknüpfen, und damit geht auch kein Dimmen per langem Tastendruck. Das Addon richtet den bekannten Umweg über die virtuellen Tasten ein, auch für Taster, die gar keine Homematic-Taster sind.",
       "en": "A BidCos-RF key cannot be linked directly to a BidCos-Wired or HmIP dimmer, so dimming by holding the key does not work either. The addon sets up the well-known detour over the virtual keys, even for keys that are not Homematic keys at all."
+    },
+    "technical": {
+      "de": "Liest Geräteliste, Verknüpfungen und Ereignisstrom der Funkschnittstellen. Legt Direktverknüpfungen von virtuellen Tasten zu Dimmern und Rollladenaktoren an, schreibt deren Verknüpfungsparameter und drückt die virtuellen Tasten (nur die, die es selbst verwaltet). Benennt die verwendeten virtuellen Tasten und markiert sie in den Metadaten. Kontaktiert nichts außerhalb des Systems.",
+      "en": "Reads the device lists, the links and the event stream of the radio interfaces. Creates direct links from virtual keys to dimmers and blind actuators, writes their link parameters and presses the virtual keys (only the ones it manages itself). Names the virtual keys it uses and marks them in the metadata. Contacts nothing outside the system."
     }
   }
 }
